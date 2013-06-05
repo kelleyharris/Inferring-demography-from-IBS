@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-1.40.11 (TeX Live 2010) (format=pdflatex 2010.7.21)  5 JUN 2013 15:16
+This is pdfTeX, Version 3.1415926-1.40.11 (TeX Live 2010) (format=pdflatex 2010.7.21)  5 JUN 2013 16:54
 entering extended mode
  \write18 enabled.
  file:line:error style messages enabled.
@@ -202,50 +202,55 @@ G,.JBIG2,.JB2,.eps]
 File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Liv
 e
 ))
-LaTeX Font Info:    Font shape `OT1/cmtt/bx/n' in size <14.4> not available
-(Font)              Font shape `OT1/cmtt/m/n' tried instead on input line 17.
+(./user_manual.toc
+LaTeX Font Info:    Font shape `OT1/cmtt/bx/n' in size <12> not available
+(Font)              Font shape `OT1/cmtt/m/n' tried instead on input line 18.
+)
+\tf@toc=\write4
+\openout4 = `user_manual.toc'.
 
-Overfull \hbox (19.05748pt too wide) in paragraph at lines 23--28
+ [1
+
+{/usr/local/texlive/2010/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
+LaTeX Font Info:    Font shape `OT1/cmtt/bx/n' in size <14.4> not available
+(Font)              Font shape `OT1/cmtt/m/n' tried instead on input line 19.
+
+Overfull \hbox (19.05748pt too wide) in paragraph at lines 25--30
 [][] 
  []
 
-[1
-
-{/usr/local/texlive/2010/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
 [2]
-Overfull \hbox (15.19391pt too wide) in paragraph at lines 74--75
+Overfull \hbox (15.19391pt too wide) in paragraph at lines 76--77
 \OT1/cmr/m/n/12 and []\OT1/cmtt/m/n/12 label2.popdata \OT1/cmr/m/n/12 and gen-e
 r-ates an out-put file []\OT1/cmtt/m/n/12 label1_vs_label2.ibs
  []
 
-
-Overfull \hbox (4.32106pt too wide) in paragraph at lines 89--90
+[3]
+Overfull \hbox (4.32106pt too wide) in paragraph at lines 91--92
 \OT1/cmtt/m/n/12 popdata \OT1/cmr/m/n/12 files, you can spec-ify op-tional ar-g
 u-ments \OT1/cmtt/m/n/12 start1\OT1/cmr/m/n/12 , \OT1/cmtt/m/n/12 end1\OT1/cmr/
 m/n/12 , \OT1/cmtt/m/n/12 start2\OT1/cmr/m/n/12 ,
  []
 
-[3]
-Overfull \hbox (90.21625pt too wide) in paragraph at lines 100--102
+
+Overfull \hbox (90.21625pt too wide) in paragraph at lines 102--104
 []\OT1/cmtt/m/n/12 label1_vs_label2_position_info_sorted.txt\OT1/cmr/m/n/12 , a
 nd []\OT1/cmtt/m/n/12 label1_vs_label2_sorted.txt\OT1/cmr/m/n/12 .
  []
 
-
-Overfull \hbox (59.2749pt too wide) in paragraph at lines 120--120
+[4]
+Overfull \hbox (59.2749pt too wide) in paragraph at lines 122--122
  []\OT1/cmtt/m/n/12 python parse_within_pop_allpairs.py sample MaskFolder perce
 ntMissing[] 
  []
 
-[4]
-Overfull \hbox (59.2749pt too wide) in paragraph at lines 138--138
+[5]
+Overfull \hbox (59.2749pt too wide) in paragraph at lines 140--140
  []\OT1/cmtt/m/n/12 python parse_within_pop_natphase.py sample MaskFolder perce
 ntMissing[] 
  []
 
-LaTeX Font Info:    Font shape `OT1/cmtt/bx/n' in size <12> not available
-(Font)              Font shape `OT1/cmtt/m/n' tried instead on input line 156.
-[5] [6] [7]
+[6] [7]
 Package epstopdf Info: Source file: <../admix_ibd/Paper_PLOS/simul_inferred_his
 tory_withshort.eps>
 (epstopdf)                    date: 2013-03-13 11:33:38
@@ -257,7 +262,7 @@ tory_withshort-eps-converted-to.pdf>
 (epstopdf)             Command: <epstopdf --outfile=../admix_ibd/Paper_PLOS/sim
 ul_inferred_history_withshort-eps-converted-to.pdf ../admix_ibd/Paper_PLOS/simu
 l_inferred_history_withshort.eps>
-(epstopdf)             \includegraphics on input line 232.
+(epstopdf)             \includegraphics on input line 234.
 Package epstopdf Info: Output file is already uptodate.
 
 <../admix_ibd/Paper_PLOS/simul_inferred_history_withshort-eps-converted-to.pdf,
@@ -267,110 +272,112 @@ File: ../admix_ibd/Paper_PLOS/simul_inferred_history_withshort-eps-converted-to
 
 <use ../admix_ibd/Paper_PLOS/simul_inferred_history_withshort-eps-converted-to.
 pdf> [8] [9 <../admix_ibd/Paper_PLOS/simul_inferred_history_withshort-eps-conve
-rted-to.pdf>]
-Overfull \hbox (61.8825pt too wide) in paragraph at lines 280--281
+rted-to.pdf>] [10]
+Overfull \hbox (61.8825pt too wide) in paragraph at lines 282--283
 \OT1/cmr/m/n/12 fol-low-ing ``Pa-ram-e-ters for plot-ting" into a text file cal
 led e.g. []\OT1/cmtt/m/n/12 demographic_history.txt\OT1/cmr/m/n/12 .
  []
 
 
-Overfull \hbox (14.98317pt too wide) in paragraph at lines 289--290
+Overfull \hbox (14.98317pt too wide) in paragraph at lines 291--292
 []\OT1/cmtt/m/n/12 inferred_onepop_adaptive_cumulative.py \OT1/cmr/m/n/12 from 
 the IBS tracts shared within
  []
 
-[10]
-Overfull \hbox (36.27736pt too wide) in paragraph at lines 297--298
+
+Overfull \hbox (36.27736pt too wide) in paragraph at lines 299--300
 \OT1/cmr/m/n/12 tions you can mod-ify the []\OT1/cmtt/m/n/12 tract_abundance \O
 T1/cmr/m/n/12 func-tion in []\OT1/cmtt/m/n/12 demographic_inputfile.py
  []
 
-[11]
-Overfull \hbox (75.3236pt too wide) in paragraph at lines 333--334
+[11] [12]
+Overfull \hbox (75.3236pt too wide) in paragraph at lines 335--336
 []\OT1/cmr/m/n/12 The three vari-ables []\OT1/cmtt/m/n/12 uncoalesced_pop1\OT1/
 cmr/m/n/12 , []\OT1/cmtt/m/n/12 uncoalesced_pop2\OT1/cmr/m/n/12 , and []\OT1/cm
 tt/m/n/12 uncoalesced_between
  []
 
-[12]
-Overfull \hbox (44.61388pt too wide) in paragraph at lines 335--336
+
+Overfull \hbox (44.61388pt too wide) in paragraph at lines 337--338
 [][]\OT1/cmtt/m/n/12 (uncoalesced_pop1, uncoalesced_pop2, uncoalesced_between) 
 = (1,0,0)\OT1/cmr/m/n/12 . 
  []
 
-
-Overfull \hbox (28.93895pt too wide) in paragraph at lines 359--360
+[13]
+Overfull \hbox (28.93895pt too wide) in paragraph at lines 361--362
 \OT1/cmr/m/n/12 The func-tion []\OT1/cmtt/m/n/12 optimization_bounds() \OT1/cmr
 /m/n/12 at the start of []\OT1/cmtt/m/n/12 demographic_inputfile.py
  []
 
-[13]
-Overfull \hbox (8.08081pt too wide) in paragraph at lines 384--385
+[14]
+Overfull \hbox (8.08081pt too wide) in paragraph at lines 386--387
 \OT1/cmr/m/n/12 Once you have spec-i-fied a his-tory by cus-tomiz-ing []\OT1/cm
 tt/m/n/12 demographic_inputfile.py\OT1/cmr/m/n/12 ,
  []
 
-[14]
-Overfull \hbox (17.5502pt too wide) in paragraph at lines 396--396
+[15]
+Overfull \hbox (17.5502pt too wide) in paragraph at lines 398--398
 []\OT1/cmtt/m/n/12 return [[0.001,0.05],[0.001,0.1],[0.0001,0.3],[0.001,1],[0.0
 5,10]][] 
  []
 
 
-Overfull \hbox (17.5502pt too wide) in paragraph at lines 403--403
+Overfull \hbox (17.5502pt too wide) in paragraph at lines 405--405
 []\OT1/cmtt/m/n/12 return [[0.001,0.05],[0.001,0.1],[0.0001,0.3],[0.001,3],[0.0
 5,10]][] 
  []
 
-[15]
 LaTeX Font Info:    Font shape `OT1/cmtt/bx/n' in size <17.28> not available
-(Font)              Font shape `OT1/cmtt/m/n' tried instead on input line 421.
+(Font)              Font shape `OT1/cmtt/m/n' tried instead on input line 423.
 
-Overfull \hbox (6.41905pt too wide) in paragraph at lines 423--424
+Overfull \hbox (6.41905pt too wide) in paragraph at lines 425--426
 \OT1/cmr/m/n/12 mo-graphic pa-ram-e-ters from each dataset. The script []\OT1/c
 mtt/m/n/12 ibs_from_ms_output.py
  []
 
-
-Overfull \hbox (44.82831pt too wide) in paragraph at lines 429--430
+[16]
+Overfull \hbox (44.82831pt too wide) in paragraph at lines 431--432
 \OT1/cmr/m/n/12 of each ``chro-mo-some" be-ing sim-u-lated. The third ar-gu-men
 t, []\OT1/cmtt/m/n/12 simulated_tracts.ibs\OT1/cmr/m/n/12 ,
  []
 
-[16] [17]
-Overfull \hbox (46.9249pt too wide) in paragraph at lines 512--513
+[17] [18]
+Overfull \hbox (46.9249pt too wide) in paragraph at lines 514--515
 [][] \OT1/cmtt/m/n/12 -es t 1 1-f1 -es 2 1 1-f2 -ej t 3 2 -ej t 4 1 -en t 1 N1 
 -en 2 N2 
  []
 
-[18]
-Overfull \hbox (54.8866pt too wide) in paragraph at lines 536--537
+[19]
+Overfull \hbox (54.8866pt too wide) in paragraph at lines 538--539
 []\OT1/cmr/m/n/12 Corresponding \OT1/cmtt/m/n/12 ms \OT1/cmr/m/n/12 com-mand: [
 ] \OT1/cmtt/m/n/12 -es t 1 1-f -en t 1 N_main -en t 2 N_ghost 
  []
 
-[19] [20] [21] (./user_manual.aux) ) 
+[20] [21] (./user_manual.aux)
+
+LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
+
+ ) 
 Here is how much of TeX's memory you used:
- 2288 strings out of 493747
- 31624 string characters out of 3143546
+ 2291 strings out of 493747
+ 31660 string characters out of 3143546
  91644 words of memory out of 3000000
  5571 multiletter control sequences out of 15000+200000
  10787 words of font info for 40 fonts, out of 3000000 for 9000
  714 hyphenation exceptions out of 8191
- 37i,6n,23p,1824b,337s stack positions out of 5000i,500n,10000p,200000b,50000s
-</usr/local/texlive/2010/texmf-dist/fonts/t
-ype1/public/amsfonts/cm/cmbx12.pfb></usr/local/texlive/2010/texmf-dist/fonts/ty
-pe1/public/amsfonts/cm/cmex10.pfb></usr/local/texlive/2010/texmf-dist/fonts/typ
-e1/public/amsfonts/cm/cmmi12.pfb></usr/local/texlive/2010/texmf-dist/fonts/type
-1/public/amsfonts/cm/cmmi8.pfb></usr/local/texlive/2010/texmf-dist/fonts/type1/
-public/amsfonts/cm/cmr12.pfb></usr/local/texlive/2010/texmf-dist/fonts/type1/pu
-blic/amsfonts/cm/cmr17.pfb></usr/local/texlive/2010/texmf-dist/fonts/type1/publ
-ic/amsfonts/cm/cmr8.pfb></usr/local/texlive/2010/texmf-dist/fonts/type1/public/
-amsfonts/cm/cmsy10.pfb></usr/local/texlive/2010/texmf-dist/fonts/type1/public/a
-msfonts/cm/cmsy8.pfb></usr/local/texlive/2010/texmf-dist/fonts/type1/public/ams
-fonts/cm/cmti12.pfb></usr/local/texlive/2010/texmf-dist/fonts/type1/public/amsf
-onts/cm/cmtt12.pfb>
-Output written on user_manual.pdf (21 pages, 179529 bytes).
+ 37i,6n,23p,1824b,252s stack positions out of 5000i,500n,10000p,200000b,50000s
+</usr/local/texlive/2010/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb
+></usr/local/texlive/2010/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb>
+</usr/local/texlive/2010/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi12.pfb><
+/usr/local/texlive/2010/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb></u
+sr/local/texlive/2010/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr
+/local/texlive/2010/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/l
+ocal/texlive/2010/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/loca
+l/texlive/2010/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local
+/texlive/2010/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/local/t
+exlive/2010/texmf-dist/fonts/type1/public/amsfonts/cm/cmti12.pfb></usr/local/te
+xlive/2010/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt12.pfb>
+Output written on user_manual.pdf (21 pages, 180800 bytes).
 PDF statistics:
  160 PDF objects out of 1000 (max. 8388607)
  85 compressed objects within 1 object stream
