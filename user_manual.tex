@@ -1,0 +1,590 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{fancyvrb}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\newcommand{\comment}[1]{}
+\begin{document}
+
+\title{Inferring demography from tracts of identity by state}
+\author{Kelley Harris \\ kharris@math.berkeley.edu}
+\date{}
+\maketitle
+
+This manual describes how to extract tracts of identity by state (IBS) from DNA sequence data and use them for demographic inference. For conceptual background on the method, see the manuscript ``Inferring demographic history from a spectrum of shared haplotype lengths" published in \emph{PLoS Genetics} by Harris and Nielsen in 2013.
+
+\section{Formatting input data}
+\subsection{Creating a \texttt{popdata} file for each population}
+
+To extract length distributions of IBS tracts from your data, you first need to create a plain text file for each population that contains four tab-delimited columns with the following data:
+
+\vspace{5 mm}
+
+\begin{tabular}{llll}
+Chromosome & Site & Reference allele & Sample configuration \\
+1 & 41342 & T & TTTAATTTTTATTTATTAT \\
+1 & 41791 & A & AAAAAAAAGGAAAAGAAAA
+\end{tabular}
+
+\vspace{5 mm}
+
+Each column of the `sample configuration' block contains genotype information from a single haplotype in your sample, specifying its allele at each listed segregating site. If your data are available as a VCF file, you can convert it into this \texttt{popdata} format using the following \texttt{vcf-query} command from the software package \texttt{vcf-tools}:
+
+\begin{verbatim}
+vcf-query file.vcf -f `%CHROM\t%POS\t%REF\t[%GT]\n'
+\end{verbatim}
+
+When inferring the joint history of two populations, we strongly recommend using data produced on a single sequencing pipeline where SNPs are called jointly across populations using a tool such as the GATK Unified Genotyper. 
+
+%\subsection{Input format details}
+
+\textbf{Scaffolds vs. true chromosomes:} Depending on the nature of your data, you can substitute arbitrary scaffold or ``pseudochromosome" numbers for chromosome numbers. This should not affect the program performance. However, chromosome numbers and site numbers should appear in numerical order. Chromosome designations must be numbers, not other strings like `X' or `Y'.
+
+
+%\textbf{Unknown reference alleles:} You can substitute the major allele for the reference allele in your VCF files if the reference allele is not known, but if you do this you should NOT use the \texttt{compatibilizeHapfiles} function as the first step in your data processing pipeline. This function takes a pair of VCF files \texttt{pop1.vcf} and \texttt{pop2.vcf} and generates a ``compatible" pair of VCF files that have identical numbers of rows corresponding to identical lists of sites. The function does so by assuming that if site $s$ not listed in the file \texttt{pop2.vcf}, the every haplotype in the sample has the reference allelic state at site $s$, as specified in the other sample file \texttt{pop1.vcf} (assuming that site $s$ is polymorphic in the other sample). If you do not have information about reference vs. derived states, you need to use some other method to generate pairs of files \begin{verbatim}pop1_for_pop2.vcf\end{verbatim} and \begin{verbatim}pop2_for_pop1.vcf.\end{verbatim} that have the same list of sites and the correct allelic states for sites that are only segregating in one population.
+
+\subsection{Data parsing pipeline}
+
+This section gives the sequence of python scripts you will need to call to extract IBS tract length distributions from a collection of single-population files in preparation for demographic inference.
+
+If all of your \verb|popdata| files have the same number of lines representing the same set of segregating sites, you can skip step 1 and move to step 2 of the pipeline. If not, step 1 describes how to create compatible files that have the same lists of variable sites. 
+
+\begin{enumerate}
+\item \verb|compatibilize_hapfiles.py|
+
+\textbf{Short explanation:} This script takes two required arguments \texttt{pop1} and \texttt{pop2} and can take two optional arguments \texttt{label1} and \texttt{label2}. If you want to look at IBS tracts shared between population 1 and population 2, represented by the \texttt{popdata} sample files  \texttt{pop1.popdata} and \texttt{pop2.popdata}, use the command
+
+\begin{verbatim}
+python compatibilize_hapfiles.py pop1 pop2
+\end{verbatim} 
+
+to generate two altered sample files  \verb|pop1_for_pop2.popdata| and 
+
+\verb|pop2_for_pop1.popdata|.
+If your filenames \texttt{pop1} and \texttt{pop2} are very long, you can enter optional abbreviated names \texttt{label1} and \texttt{label2} and the command
+
+\begin{verbatim}
+python compatibilize_hapfiles.py pop1 pop2 label1 label2
+\end{verbatim} 
+
+so that your output files will be named \verb|label1_for_label2.popdata| and \verb|label2_for_label1.popdata| instead.
+
+\item \verb| parse_between_pops_allpairs.py |
+
+This script reads in two compatibilized \texttt{popdata} files  \verb|label1.popdata| and \verb|label2.popdata| and generates an output file \verb|label1_vs_label2.ibs| with the length distribution of IBS tracts shared between the two input haplotype samples. The input files are required to have the same number of lines corresponding to the same list of sites, as accomplished by the \verb|compatibilize_hapfiles.py| script. 
+
+If $h_0,\ldots,h_{n-1}$ are the haplotypes from population 1 and $g_0,\ldots,g_{m-1}$ are the haplotypes from population 2, then by default, the output distribution pools all $nm$ possible comparisons of a haplotype $h_i$ with a haplotype $h_j$. This is accomplished by the following command:
+
+\begin{Verbatim}
+python parse_between_pops_allpairs.py label1 label2 MaskFolder 
+	percentMissing 
+\end{Verbatim}
+
+The arguments \texttt{MaskFolder} and \texttt{percentMissing} are used to filter out regions of low-quality data and will be explained later. If you do not wish to filter the data, set \texttt{MaskFolder} equal to \texttt{None} and \texttt{percentMissing} equal to 1:
+
+\begin{verbatim}
+python parse_between_pops_allpairs.py label1 label2 None 1
+\end{verbatim}
+
+If you wish to use only a subset of the haplotype samples from your \texttt{popdata} files, you can specify optional arguments \texttt{start1}, \texttt{end1}, \texttt{start2}, and \texttt{end2}:
+
+\begin{Verbatim}
+python parse_between_pops_allpairs.py label1 label2  MaskFolder 
+			 percentMissing start1 end1 start2 end2
+\end{Verbatim}
+
+If you set \texttt{start1}, \texttt{end1}, \texttt{start2}, and \texttt{end2} equal to $i,j,k$ and $l$, respectively, subject to the constraints $0\leq i<j<n$ and $0\leq k<l<m$, this restricts your analysis to the haplotypes $h_i,\ldots,h_{j-1}$ from population 1 and $g_k,\ldots,g_{l-1}$ from population 2. 
+
+The filtering argument \texttt{percentMissing} can be set to a threshold value $t$ between 0 and 1. The script then throws out all IBS tracts with a frequency of `N's (missing data) greater than $t$. See Section~\ref{filtering} on data filtering and quality control for more information about this and about specifying a mask folder.
+
+In addition to the final output file \verb|label1_vs_label2.ibs|, the \\ \noindent \verb|parse_between_pops_allpairs.py| script generates several intermediate files:  \verb|label1_vs_label2_lengths_unsorted.txt|, \\ \noindent  \verb|label1_vs_label2_position_info.txt|,  \\ \noindent \verb|label1_vs_label2_position_info_sorted.txt|, and  \verb|label1_vs_label2_sorted.txt|. These can often be ignored and/or overwritten, but the \\ \noindent
+\verb|label1_vs_label2_position_info_sorted.txt| file can be useful for locating regions with clustered long IBS tracts that might be artifacts of bioinformatical errors.
+
+\item \verb|parse_between_pairs_noreuse.py|
+
+This script can be run instead of \verb|parse_between_pairs_allpairs.py| to generate a list of IBS tract shared between populations:
+
+
+\begin{Verbatim}
+python parse_between_pops_allpairs.py label1 label2  MaskFolder 
+			 percentMissing start1 end1
+\end{Verbatim}
+ Instead of sampling all  $mn$ possible haplotype pairs, it generates IBS tracts shared between haplotype $i$ from population 1 and haplotype $i$ from population 2 for all $i$ ranging from \texttt{start1} to \texttt{end1}. It therefore runs faster and generates a smaller set of IBS tract lengths, but these lengths are less correlated with each other than the lengths output by \verb|parse_between_pairs_allpairs.py|.
+
+\item \verb|parse_within_pop_allpairs.py|
+
+This script reads in a single \texttt{popdata} file \texttt{sample.popdata} and generates an output file \texttt{sample.ibs} with the length distribution of IBS tracts shared within pairs of haplotypes from this sample. By default, the spectrum reflects all $\binom{n}{2}$ pairwise comparisons from the full haplotype set $h_0,\ldots,h_{n-1}$ described by \texttt{sample.popdata}. To parse all data in this way, use the command
+
+\begin{verbatim}
+python parse_within_pop_allpairs.py sample MaskFolder percentMissing
+\end{verbatim}
+
+By specifying optional arguments \texttt{start1 = i} and \texttt{end1 = j}, you can instead sample from restricted haplotype range $h_i,\ldots,h_{j-1}$: 
+
+\begin{Verbatim}
+python parse_within_pop_allpairs.py sample MaskFolder 
+	percentMissing start1 end1
+\end{Verbatim}
+
+
+The \texttt{percentMissing} and \texttt{maskFolder} arguments work the same here as in \verb|parse_between_pops.py|, described more fully in Section~\ref{filtering} on data filtering and quality control.
+
+\item \verb|parse_within_pop_natphase.py|
+
+This script can be run instead of \verb|parse_within_pop_allpairs.py| with the exact same arguments: 
+
+\begin{verbatim}
+python parse_within_pop_natphase.py sample MaskFolder percentMissing
+\end{verbatim}
+
+or
+
+
+\begin{Verbatim}
+python parse_within_pop_natphase.py sample MaskFolder 
+	percentMissing start1 end1
+\end{Verbatim}
+
+Instead of generating IBS tracts from all $\binom{n}{2}$ subsampled haplotype pairs, it pairs up haplotype 0 with haplotype 1, haplotype 2 with haplotype 3, and in general, haplotype $2i$ with haplotype $2i+1$. This is designed to sample IBS tracts shared within the input diploid individuals so that the results do not depend on the method that was used to phase the data. 
+
+
+\end{enumerate} 
+
+\subsection{Data filtering and quality control}\label{filtering}
+Although demography is being inferred from the entire length distribution of IBS tracts, not just long tracts that are correlated with very recent common ancestry, even one or two long IBS tracts may be interpreted as strong evidence for recent migration and/or a population bottleneck. As a result, it is imperative to make sure that the long IBS tracts in your sample are real and are not artifacts of alignment gaps or low/uneven sample coverage. Filtering IBS tracts involves trial and error and is an area in need of more study, but this section describes a couple of basic stategies and tools.
+
+\subsubsection{The \texttt{percentMissing} argument}
+We parse haplotype samples such that missing data, annotated as `N's, does not automatically break up IBS tracts. This is designed to keep missing data from degrading real signatures of population size reduction and recent admixture. However, setting the \texttt{percentMissing} argument to a threshold $t$ between 0 and 1 will throw out all IBS tracts where the fraction of sites where `N's occur exceeds $t$. If you rely on this method to control the quality of your IBS tract spectrum and do not specify a folder of mask files, we recommend that you make sure all missing data is annotated in your VCF files. In particular, if every one of your haplotypes is missing data at site $s$, you should make sure to include $s$ as a site in the VCF file with `N's across the board. 
+
+The ideal threshold $t$ will depend will depend on your sample's sequencing quality and level of polymorphism. We do not specify a default, but recommend that you experiment with different thresholds. The error threshold is probably too low if your longest IBS tracts are clustered in the genome, i.e. if you observe very few tracts shared tracts longer than 200,000 b.p. but see six 200,000 b.p. IBS tracts that occur at the same position in different samples. This sort of pattern is probably the result of missing data or strong positive selection that lead to misleading inferences about demography.
+
+\subsubsection{Specifying a mask folder}
+To exclude specific chromosomal regions from your analysis, you can name a mask folder that includes a file of excluded regions for each chromosome. The package includes a \texttt{sampleHumanMaskFolder} that specifies unmappable regions of the human \texttt{hg19} reference genome, containing 22 files \texttt{chrom1.txt} thru \texttt{chrom22.txt}. Note that different maskfiles might be required for other human datasets that have different patterns of mapping errors. You can generate your own mask folder by looking for regions of low mapping quality or SNP sparsity in your own dataset, either excluding a few regions of lowest quality or excluding everything but select high quality regions.
+
+\comment{
+
+
+%\subsection{Annotating low-quality regions}
+Even after you create a mask folder that excludes unmappable regions from your sequences, we recommend looking at the files \verb|pop1_vs_pop2_position_info_sorted.txt|, \verb|pop1_position_info_sorted.txt|, and \verb|pop2_position_info_sorted.txt| to see whether the longest IBS tracts are clustered or evenly dispersed. The three columns of each of these files denote chromosome number, chromosome position, and IBS tract length. This is an example of the beginning of a \verb|position_info_sorted.txt| file where the longest few tracts appear at very different genomic locations and there are probably no low-quality problematic regions that remain unmasked:
+
+\begin{Verbatim}
+Chromosome	position	Tract length
+1	678423098	345682
+5	1046496079	305048
+7	43208658		296706
+3	9673465486	276048
+\end{Verbatim}
+
+In contrast, if the longest few IBS tracts are located on the same chromosome at roughly the same position, then that genomic region might be affected by mapping quality issues (or strong natural selection) and should probably be masked from the analysis:
+
+\begin{Verbatim}
+Chromosome	position	Tract length
+7	43208648		496726
+7	43208670		496718
+7	43208687		496683
+7	43207848		496607
+3	9673465486	176048
+\end{Verbatim}
+
+The script \verb|suggest_gaps.py| automatically scans through a \verb|position_info_sorted.txt| file and returns a list of ``suspicious" regions that appear to have a lot of coincident long IBS tracts. When you call this script, you must specify a threshold number that constitutes a ``long" IBS tract. The command
+
+\begin{verbatim}
+python suggest_gaps.py samplename tract_length
+\end{verbatim}
+
+will look at all IBS tracts in the file \verb|samplename_position_info_sorted.txt| that are at least \verb|tract_length| base pairs long and return a list of suspicious regions called \verb|samplename_proposed_gaps_thresh_tract_length.txt|. Alternatively, you can include the desired name of a mask folder as a third argument:
+
+\begin{verbatim}
+python suggest_gaps.py samplename tract_length MaskFolderName
+\end{verbatim}
+
+and the program will return the set of suspicious gaps as a mask folder with the desired name. 
+
+You should experiment with different length thresholds here to explore the tradeoff between finding all low quality regions and masking large amounts of normal data. For human data, where the median IBS tract length is about 1,000 base pairs, the threshold should be set somewhere between 10,000 and 100,000 base pairs depending on data quality. 
+
+}
+
+If you want to merge together two mask folders that were created in different ways, you can do so with the script \verb|merge_gapfiles.py|, specifying the names of two existing mask folders in any order followed by the desired name of the output mask folder:
+
+\begin{verbatim}
+python merge_gapfiles.py maskFolder1 maskFolder2 outputFolder
+\end{verbatim}
+
+
+For this to work, each mask folder must have the same number of files, one for each chromosome.
+
+\section{Optimizing a demographic model}
+This section describes how to infer population size changes, divergence times, and migration from distributions of IBS tract lengths.
+
+
+\subsection{Setting mutation and recombination rates}
+Before you start fitting a demographic model to your data, you must hard-code your species's recombination and mutation rates into the file 
+
+\noindent \verb|calc_ibs_backcoal_varmu.py|. This involves modifying the values assigned to \texttt{theta} and \texttt{rho} at the very beginning of the file, setting \texttt{theta} equal to 40,000 times the mutation rate per site per generation and \texttt{rho} equal to 40,000 times the recombination rate per site per generation. The factor of 40,000 is motivated by the population genetic formulas $\theta=4N\mu$ and $\rho=4Nr$, assuming that the effective population size is on the order of 10,000 as it is in humans. 
+
+
+\subsection{Accounting for variable mutation rate}
+
+Our coalescent method predicts that the frequency $f_{\textrm{IBS}}(L)$ of $L$-base-long IBS tracts is almost constant as a function of $L$ when $L$ is very short (specifically, when $L\ll 1/\Theta$. This prediction holds true in data produced by a coalescent simulator like \texttt{ms}. However, in real human data we observe an excess of very short IBS tracts and we attribute this to the presence of cryptic mutation rate variation. As the manuscript explains in more detail, we cope with human mutation rate variation by excluding IBS tracts shorter than 100 base pairs and assuming that a randomly distributed 1\% of sites have a mutation rate that is 39 times higher than the baseline mutation rate. These assumptions are encoded by setting the variable \verb|var_mutrate_param| at the start of  \verb|demographic_function_builder.py| equal to 0.039 (39 times the mutation rate $\theta=0.001$ that we use for humans) and setting \verb|min_tract_length| at the start of \verb|infer_from_inputfile.py| equal to 100. If you are working with data from another species, you may want to set these parameters differently, decreasing the minimum tract length used for inference if your organism has a higher mutation rate and setting \verb|var_mutrate_param| equal to \verb|theta| if you do not wish to model cryptic mutational hotspots. To decide whether it is necessary to model cryptic hotspots, you can plot the distribution of observed IBS tract lengths on a log-log scale and check for a sharp uptick in the abundance of the shortest IBS tracts (as seen for human data in Figure~\ref{mut_rate_variation}). The main downside of ignoring IBS tracts shorter than 100 base pairs is the potential for losing information about the ancient past, especially when the mutation rate is high.
+
+\begin{figure}
+\begin{center}
+\includegraphics[width=0.75\textwidth]{../admix_ibd/Paper_PLOS/simul_inferred_history_withshort.eps}
+\caption{\textbf{IBS tracts in real human data vs. simulated data.} These \texttt{ms} data shown in pink were simulated under a history fit to the frequency spectrum of human IBS tracts greater than 100 base pairs long. As shown here, the real human data contains an excess of shorter IBS tracts, particularly very short tracts less than 5 base pairs long.}\label{mut_rate_variation}
+\end{center}
+\end{figure}
+
+\subsection{Inferring size changes within one population}
+The easiest way to infer size changes within one population is to use the script \verb|infer_onepop_adaptive_cumulative.py| as follows:
+
+\begin{Verbatim}
+python infer_onepop_adaptive_cumulative.py population_lengths.ibs 
+	min_tract_length num_reps generation_time
+\end{Verbatim}
+
+The argument \verb|population.ibs| is the name of the input IBS tract length file. As mentioned earlier, \verb|min_tract_length| is the shortest IBS tract length (measured in base pairs) that you wish to use for inference. It should typically take values between 5 and 100, using shorter values for data with high polymorphism and/or low mutation rate heterogeneity. The third argument, \verb|num_reps|, is the number of iterations you wish to perform: if you set \verb|num_reps| equal to 20, then the script will iteratively find 20 different population histories, each with a better fit and more parameters than the last.  Finally, \verb|generation_time| is the desired species generation time in years.
+
+The first history printed to the screen will be the best-fit constant population size history, while the second history will have one population size change and later histories will have additional size changes. At most one population size change will be added each iteration. This is an example of a history that is printed to the screen after being fit to the data:
+
+\begin{Verbatim}
+
+Best history so far: 
+Population sizes (present to past) :1987.42, 4903.036, 9347.5338
+Population size change times (kya) :39.47687, 193.64829
+
+Parameters for plotting: 
+[0.07895374, 0.30834284, 0.198742, 0.4903036, 0.93475338]
+
+\end{Verbatim}
+
+These parameters describe a history in which the ancestral effective population size was 9,347. The population size decreased to 4,903 around 194 thousand years ago (kya), and decreased again to 1,987 around 39 kya. 
+
+If you wish to plot the expected IBS tracts given this history and compare them to the IBS tracts observed in your data, you need to copy the list of numbers that follows ``Parameters for plotting" into a text file called e.g. \verb|demographic_history.txt|. The following command generates a file called \verb|demographic_plot.pdf| that compares the predicted and observed IBS tract length distributions:
+
+\begin{Verbatim}
+python plot_onepop.py population.ibs demographic_history.txt 
+	demographic_plot.pdf
+\end{Verbatim}
+
+\subsection{Inferring a simple population divergence}
+
+The script \verb|infer_between_adaptive_cumulative.py| fits the distribution of IBS tracts shared between two populations to a simple divergence scenario with no migration. It can be called as follows:
+
+\begin{Verbatim}
+python infer_onepop_adaptive_cumulative.py pop1_vs_pop2_lengths.ibs 
+	min_tract_length num_reps generation_time
+\end{Verbatim}
+
+Each output history specifies a divergence time along with a sequence of population size changes that affected the ancestral population prior to divergence:
+
+To check the fit between observed and expected IBS tracts, copy the line following ``Parameters for plotting" into a text file called e.g. \verb|demographic_history.txt|. The following command generates a file called \verb|demographic_plot.pdf| that compares the predicted and observed IBS tract length distributions:
+
+\begin{Verbatim}
+python plot_between.py pop1_vs_pop2.ibs demographic_history.txt 
+	demographic_plot.pdf
+\end{Verbatim}
+
+If the fit between expected and observed IBS tracts stays poor after many iterations of \verb|infer_between_adaptive_cumulative.py|, or if the inferred population sizes are not compatible with the sizes inferred by 
+
+\noindent \verb|inferred_onepop_adaptive_cumulative.py| from the IBS tracts shared within populations, then the data might contain signatures of migration and/or ghost admixture and be incompatible with a simple divergence model.
+
+\subsection{Complex population histories} 
+
+This section describes how to infer the parameters of a complex demographic history by jointly maximizing the likelihood of IBS tracts shared within and between populations. The first step is to specify your demographic model by modifying the file \verb|demographic_inputfile.py|. 
+
+\subsubsection{Specifying a demographic model}\label{custom_model}
+
+The file \verb|demographic_function_builder.py| is not an executable file, but includes a set of functions that you can call to obtain the expected IBS tract length distribution given a custom demographic history. Using these functions you can modify the \verb|tract_abundance| function in \verb|demographic_inputfile.py| to specify any history that contains instantaneous population size changes and admixture events, but no continuous periods of migration or population growth. 
+
+Here is an example of a tract length distribution function for two populations of sizes \verb|N1| and \verb|N2| that diverged at time \verb|ts| from a population of size \verb|N| and exchanged an admixture pulse of admixture fraction \verb|f| at time \verb|tm|. We optimize the time parameter \verb|ts_diff = ts - tm| rather than the divergence time \verb|ts| because the divergence time is constrained to be greater than the time of migration, and it is more convenient to simply constrain \verb|ts_diff| to be greater than zero. The specific functions called here are explained in detail in section~\ref{list_commands}, but this example is presented first to demonstrate the structure that the distribution function should have:
+
+\begin{Verbatim}
+from demographic_function_builder import *
+import math
+
+def tract_abundance(L, (uncoalesced_pop1, uncoalesced_pop2, 
+	uncoalesced_between), (N1, N2, N, tm, ts_diff, f)):
+	
+	ts = tm + ts_diff
+	
+	prob_list = []
+	prob_list = initialize_pop(L, prob_list, uncoalesced_pop1, N1)
+	prob_list = initialize_pop(L, prob_list, uncoalesced_pop2, N2)
+	uncoalesced_pop1 = time_lapse(uncoalesced_pop1, N1, tm)
+	uncoalesced_pop2 = time_lapse(uncoalesced_pop2, N2, tm)
+	prob_list, uncoalesced_pop1, uncoalesced_pop2, uncoalesced_between 
+		= two_way_admixture(L, prob_list, uncoalesced_pop1, 
+			uncoalesced_pop2, uncoalesced_between, N1, N2, tm, f, 0)
+	uncoalesced_pop1 = time_lapse(uncoalesced_pop1, N1, ts_diff)
+	uncoalesced_pop2 = time_lapse(uncoalesced_pop2, N2, ts_diff)
+	prob_list, uncoalesced_merged = pop_merge(L,prob_list, uncoalesced_pop1,	
+		uncoalesced_pop2, uncoalesced_between, N1, N2, N, ts)
+	
+	return math.fsum(prob_list)
+
+\end{Verbatim}
+
+Here, the object \verb|prob_list| is a list of numbers that will be added together to yield the desired probability. Each demographic event modifies \verb|prob_list| by adding more terms. The python function \verb|math.fsum| adds up the terms of \verb|prob_list| in a way that is more numerically stable than using plus and minus signs.
+
+Demographic events need to be specified in order from the present moving backward into the past. At time zero, the two populations are initialized with the function \verb|initialize_pop| that specifies their current sizes. The scaling of the sizes will depend on the units of your mutation and recombination rate; for example, if you specify \verb| theta = 0.001| mutations per site per $4\times 10,000$ generations, a typical scaling for humans that corresponds to a mutation rate of $2.5\times 10^{-8}$ per site per generation, all population sizes should be scaled by a factor of 10,000. In this case, setting \verb|N1 = 1| and \verb|N2 = 2| means that populations 1 and 2 will have recent sizes 10,000 and 20,000, respectively.
+
+After initializing the populations, the next event backwards in time is the admixture pulse at \verb|tm|, but before that event is specified, the \verb|time_lapse| function must be applied once to each population to move the time pointer back from time \verb|0| to time \verb|tm|. Similarly, after the admixture pulse happens, the \verb|time_lapse| function must be called twice more to move each population's time pointer back to time \verb|ts|. 
+
+The three variables \verb|uncoalesced_pop1|, \verb|uncoalesced_pop2|, and \verb|uncoalesced_between| take numerical values between 0 and 1. You can identify them with three functions of time $u_1(t)$, $u_2(t)$, and $u_{12}(t)$, where $u_1(t)$ is the probability that at time $t$, and randomly selected pair of lineages will not have coalesced yet and will both lie in population 1. Similarly, $u_2(t)$ is the probability that two lineages will not have coalesced yet and both lie in population 1, while $u_{12}(t)$ is the probability that they have not coalesced yet and lie in different populations. The three values that you pass as arguments are $u_1(0),$ $u_2(0),$ and $u_{12}(0)$; if you wish to predict the distribution of IBS tracts shared between two haplotypes sampled from population 1 in the present, you should specify 
+
+\verb|(uncoalesced_pop1, uncoalesced_pop2, uncoalesced_between) = (1,0,0)|.
+
+You can instead specify \verb|(0,1,0)| if both haplotypes are sampled from population 2, or specify \verb|(0,0,1)| if one haplotype is sampled from each population. In summary, the following command returns the frequency of \texttt{L}-base-long IBS tracts shared between haplotypes from population 1:
+
+\begin{verbatim}
+tract_abundance(L, (1,0,0), (N1, N2, N, tm, ts_diff, f))
+\end{verbatim}
+
+This command returns the frequence of \texttt{L}-base IBS tracts shared between haplotypes from population 2:
+
+\begin{verbatim}
+tract_abundance(L, (0,1,0), (N1, N2, N, tm, ts_diff, f))
+\end{verbatim}
+
+This command returns the frequence of \texttt{L}-base IBS tracts shared between one haplotype from population 1 and one haplotype from population 2:
+
+\begin{verbatim}
+tract_abundance(L, (0,0,1), (N1, N2, N, tm, ts_diff, f))
+\end{verbatim}
+
+In addition to adding terms to \verb|prob_list|, the \verb|time_lapse| function and demographic event functions update \verb|uncoaleced_pop1|, \verb|uncoalesced_pop2|, and \verb|uncoalesced_between| to take on values of $u_1(t)$, $u_2(t)$, and $u_{12}(t)$ for nonzero $t$. Specifically, the  \verb|time_lapse| function decreases the values of  \verb|uncoaleced_pop1| and \verb|uncoaleced_pop1| to reflect coalescence events that happen during the elapsed time period. For that reason, you should never apply the \verb|time_lapse| function to \verb|uncoalesced_between| because lineages from different populations cannot coalesce between migration events.
+
+\subsection{Specifying parameter bounds}
+
+The function \verb|optimization_bounds()| at the start of \verb|demographic_inputfile.py| should always return a list of 2-element lists with the same length as the third argument of \verb|tract_abundance|. For the example history described in~\ref{custom_model}, the optimization bounds vector should have length 6. 
+
+Setting good parameter bounds can take trial and error. The optimization script will print warnings when parameters are hitting upper and lower bounds, indicating that these bounds need to be raised or possibly lowered (though they should never be set as low as zero). The first three parameters are population size scaling factors defined with respect to the default population size of 10,000; setting each of the first three bounds equal to \verb|[0.05,20.0]| allows the population sizes to vary between 500 and 200,000. The next two arguments are times and should typically be set between 0.001 and 10 or to a narrower range that may make the optimizations take less time and succeed more often. The final parameter is a fraction that should be bounded by \verb|[0.001,0.99]| or some narrower range (setting upper and lower bounds away from 0 and 1 avoids getting the optimization trapped in nested histories that contain no admixture).
+
+\subsection{Describing the history}
+
+The function \verb|describe_history| at the end of \verb|demographic_inputfile.py| allows you to translate the arguments of \verb|tract_abudance| into more convenient units, for example, converting population size scaling factors into absolute population sizes and converting time difference parameters into absolute times measured in thousands of years before the present (kya). Its only function is to print something to the screen that you will find more useful than the raw optimized parameter vector. It takes the optimized parameter vector as its first argument and the generation time and standard population size as second and third arguments (this function is called from the plotting script \verb|plot_from_inputfile.py|. Here is an example description of the history from~\ref{custom_model}:
+
+\begin{Verbatim}
+def describe_history((N1, N2, N, tm, ts_diff, f), gen_time, standard_popsize):
+    output = `Time of most recent gene flow: '
+    	+str(tm*gen_time*standard_popsize*0.001)+` kya\n'
+    output += `Divergence time: '
+    	+str((tm+ts_diff)*gen_time*standard_popsize*0.001)+` kya\n'
+    output += `Size of population 1: '
+    	+str(N1*standard_popsize)+`\n'
+    output += `Size of population 2: '
+    	+str(N2*standard_popsize)+`\n'
+    output += `Ancestral population size: '
+    	+str(N*standard_popsize)+`\n'
+    return output
+\end{Verbatim}
+
+\subsection{Running the optimization}
+
+Once you have specified a history by customizing \verb|demographic_inputfile.py|, you can optimize its parameters as follows:
+
+\begin{Verbatim}
+python optimize_from_inputfile.py pop1.ibs pop2.ibs 
+	pop1_vs_pop2.ibs optimization_output.txt min_tract_length
+\end{Verbatim}
+
+In this command line, \verb|optimization_output.txt| is the desired name of the optimization output file. The parameter \verb|min_tract_length| is the length in base pairs of the shortest IBS tracts to be included in the optimization (as discussed before, this should typically be set between 5 and 100). Warnings will pop up if you are hitting the upper and/or lower bounds of the optimization. The parameters are numbered starting at 0--if, for example, parameter 3 hits its upper optimization bound, you should manually increase the second number of the fourth entry of the vector returned by \verb|optimization_bounds| in \verb|demographic_inputfile.py|:
+
+\begin{verbatim}
+def optimization_bounds():
+	return [[0.001,0.05],[0.001,0.1],[0.0001,0.3],[0.001,1],[0.05,10]]
+\end{verbatim}
+
+changes to
+
+\begin{verbatim}
+def optimization_bounds():
+	return [[0.001,0.05],[0.001,0.1],[0.0001,0.3],[0.001,3],[0.05,10]]
+\end{verbatim}
+
+There is less of a problem if parameters are hitting lower bounds; this only indicates that the model could be simplified to eliminate some parameters.
+
+
+\subsection{Plotting expected vs. observed IBS tract lengths}
+
+Once you have optimized the parameters of your custom history, you can plot the expected vs. observed IBS tracts using the following command:
+
+
+\begin{Verbatim}
+python plot_from_inputfile.py pop1.ibs pop2.ibs 
+	pop1_vs_pop2.ibs optimization_output.txt desired_graph_filename.pdf 
+	generation_time min_tract_length
+\end{Verbatim}
+
+Your description of the demographic history being plotted will print to the screen. The inferred and observed IBS tract length distributions will be plotted in a pdf with the name \verb|desired_graph_filename.pdf|. If the model does not appear to fit the data well, it should not be considered a reliable demographic estimate. To improve the fit, you may need to change the optimization bounds, try a more complex model, adjust the variable mutation rate parameter, or remove more missing data-heavy long IBS tracts from the observed IBS tract length spectrum. 
+
+\section{Simulating IBS tract lengths with \texttt{ms}}
+
+To assess the accuracy of an inferred history and test for parameter estimate bias, it is good to perform parametric bootstrapping, simulating several replicate datasets under the full coalescent with recombination and estimating demographic parameters from each dataset. The script \verb|ibs_from_ms_output.py| can parse an output file \verb|ms.out| of Hudson's \texttt{ms} coalescent simulator \cite{ms} and return the IBS tract length distribution of the data:
+
+\begin{Verbatim}
+python ibs_from_ms_output.py ms.out rep_sequence_length simulated_tracts.ibs
+\end{Verbatim}
+
+The second argument, \verb|rep_sequence_length|, is the length in base pairs of each ``chromosome" being simulated. The third argument, \verb|simulated_tracts.ibs|, is the desired name of the IBS tract length file.
+
+For simulating long chromosomes, it is necessary to increase the decimal precision of the \verb|ms| segregating site position output. To do this, find the line \verb|fprintf(pf, "%6.41f  ",posit[i] );| in the source code \verb|ms.c|,  replace it with \verb|fprintf(pf, "%6.10lf ",posit[i]);|, and recompile \texttt{ms} with the command \verb| gcc -o ms ms.c streec.c rand1t.c -lm|. 
+
+\section{List of demographic event functions}\label{list_commands}
+This section explains all of the functions that can be imported from 
+
+\noindent \verb|demographic_function_builder.py|. Most of these functions are related to commands from Hudson's coalescent simulator \texttt{ms} \cite{ms}, and we include these commands for the benefit of users who are already familiar with \texttt{ms} syntax. 
+\vspace{ 0.5 cm}
+
+\begin{Verbatim}
+prob_list = initialize_pop(L,prob_list,uncoalesced_pop_i, N)
+\end{Verbatim}
+
+\begin{enumerate}
+\item[$\cdot$]Sets the initial size of population $i$ equal to \texttt{N}. 
+
+\item[$\cdot$]Corresponding \texttt{ms} command: \verb| -en 0 i N|
+\end{enumerate}
+\vspace{0.5 cm}
+
+\begin{Verbatim}
+uncoalesced_pop_i = time_lapse(uncoalesced_pop_i, N, t-t_0)
+\end{Verbatim}
+
+\begin{enumerate}
+\item[$\cdot$] Advances the time pointer in population $i$ from time \verb|t_0| to time \texttt{t}
+\item[$\cdot$] Before calling this function, ensure that population $i$'s time pointer is currently at time \verb|t_0| and that its population size is currently \texttt{N}
+\item[$\cdot$]Corresponding \texttt{ms} command: N/A
+\end{enumerate}
+\vspace{0.5 cm}
+
+\begin{Verbatim}
+prob_list = popsize_change(L,prob_list,uncoalesced_pop_i, N_old, N, t)
+\end{Verbatim}
+
+\begin{enumerate}
+\item[$\cdot$] At time \texttt{t}, changes the size of population $i$ from \verb|N_old| to \texttt{N}.
+\item[$\cdot$] Before calling this function, check that the population $i$ has current size \verb|N_old| and its time pointer has been advanced to time \texttt{t} using \verb|time_lapse|.
+\item[$\cdot$]Corresponding \texttt{ms} command: \verb| -en t i N|
+\end{enumerate}
+
+\begin{Verbatim}
+prob_list, uncoalesced_pop1, uncoalesced_pop2, uncoalesced_merged
+	 = two_way_admixture(L,prob_list,uncoalesced_pop1, 
+	uncoalesced_pop2, uncoalesced_between, N1, N2, t, f1, f2)
+\end{Verbatim}
+
+\begin{enumerate}
+\item[$\cdot$] At time \texttt{t}, looking backward in time, each lineage from population 1 moves to population 2 with probability \texttt{f1}. Each lineage from population 2 moves to population 1 with probability \texttt{f2}.
+\item[$\cdot$] Before calling this function, check that the populations 1 and 2 have current sizes \texttt{N1} and \texttt{N2}, respectively, and that both time pointers have been advanced to time \texttt{t} using \verb|time_lapse|.
+\item[$\cdot$]Corresponding \texttt{ms} command: 
+
+\verb| -es t 1 1-f1 -es 2 1 1-f2 -ej t 3 2 -ej t 4 1|
+\end{enumerate}
+\vspace{0.5 cm}
+
+\begin{Verbatim}
+prob_list, uncoalesced_pop1, uncoalesced_pop2, uncoalesced_merged 
+	= two_way_admixture_change_one_size(L,prob_list,uncoalesced_pop1, 
+	uncoalesced_pop2, uncoalesced_between, N1_old, N1, N2, t, f1, f2)
+\end{Verbatim}
+
+\begin{enumerate}
+\item[$\cdot$] Same as \verb|two_way_admixture| except that population 1 changes size from \verb|N1_old| to \verb|N1| at the same time as the admixture event. This is more numerically stable than specifying separate admixture and size change events. 
+\item[$\cdot$] Before calling this function, check that the populations 1 and 2 have current sizes \verb|N1_old| and \texttt{N2}, respectively, and that both time pointers have been advanced to time \texttt{t} using \verb|time_lapse|.
+\item[$\cdot$]Corresponding \texttt{ms} command: 
+
+\verb| -es t 1 1-f1 -es 2 1 1-f2 -ej t 3 2 -ej t 4 1 -en t 1 N1|
+\end{enumerate}
+\vspace{0.5 cm}
+
+\begin{Verbatim}
+prob_list, uncoalesced_pop1, uncoalesced_pop2, uncoalesced_merged 
+	= two_way_admixture_change_one_size(L,prob_list,uncoalesced_pop1, 
+	uncoalesced_pop2, uncoalesced_between, N1_old, N2_old, N1, N2, t, f1, f2)
+\end{Verbatim}
+
+\begin{enumerate}
+\item[$\cdot$] Same as \verb|two_way_admixture| except that both populations change size at the same time as the admixture event. This is more numerically stable than specifying separate admixture and size change events. 
+\item[$\cdot$] Before calling this function, check that the populations 1 and 2 have current sizes \verb|N1_old| and \verb|N2_old|, respectively, and that both time pointers have been advanced to time \texttt{t} using \verb|time_lapse|.
+\item[$\cdot$]Corresponding \texttt{ms} command: 
+
+\verb| -es t 1 1-f1 -es 2 1 1-f2 -ej t 3 2 -ej t 4 1 -en t 1 N1 -en 2 N2| 
+\end{enumerate}
+\vspace{0.5 cm}
+
+\begin{Verbatim}
+prob_list, uncoalesced_merged = pop_merge(L,prob_list,uncoalesced_pop1, 
+	uncoalesced_pop2, uncoalesced_between, N1_old, N2_old, N, t)
+\end{Verbatim}
+
+\begin{enumerate}
+\item[$\cdot$] Corresponds to population splitting forward in time. At time \texttt{t} looking backward in time, two populations of sizes \texttt{N1} and \texttt{N2} merge into a single population of size \texttt{N}.
+\item[$\cdot$] Before calling this function, check that the populations 1 and 2 have current sizes \verb|N1| and \verb|N2|, respectively, and that both time pointers have been advanced to time \texttt{t} using \verb|time_lapse|.
+\item[$\cdot$]Corresponding \texttt{ms} command: \verb| -ej t 2 1 -en t 1 N| 
+\end{enumerate}
+\vspace{0.5 cm}
+
+\begin{Verbatim}
+prob_list, uncoalesced_main, uncoalesced_ghost, uncoalesced_between 
+= ghost_pop_split(L,prob_list,uncoalesced_pop_i, N_old, N_main, N_ghost, t, f)
+\end{Verbatim}
+
+\begin{enumerate}
+\item[$\cdot$] Corresponds to ghost admixture forward in time. At time \texttt{t} looking backward in time, a population of size \verb|N_old| transfers a fraction \texttt{f} of its lineages into a new ghost population of size \verb|N_ghost|. The remaining lineages contribute to a main population of size \verb|N_main|.
+\item[$\cdot$] Before calling this function, check that the population $i$ has current size \verb|N_old| and that its time pointer has been advanced to time \texttt{t} using \verb|time_lapse|.
+\item[$\cdot$]Corresponding \texttt{ms} command: \verb| -es t 1 1-f -en t 1 N_main -en t 2 N_ghost |
+\end{enumerate}
+\vspace{0.5 cm}
+
+\subsection{Joint histories of three or more populations}
+A little extra bookkeeping is required to compute the expected IBS tract length distribution for a joint history of three or more populations. This applies even if DNA is sampled from only two extant populations but is a third ghost population splits off at some point in the past. The extra thing to remember is that when populations 1 and 2 split apart, merge, or exchange migrants, you must manually keep track of pairs of lineages that are split between populations 1 and 3  or between populations 2 and 3. 
+
+
+To illustrate, here is an example of a tract length distribution for a history including ghost admixture:
+
+\begin{Verbatim}
+from demographic_function_builder import *
+import math
+
+def tract_abundance(L, (uncoalesced_pop1, uncoalesced_pop2,
+	uncoalesced_pop1_pop2), (N, t_ghost_mix, t_split_diff, 
+	t_ghost_split_diff, f)):
+	
+	t_split = t_ghost_mix+ t_split_diff
+	t_ghost_split = t_split + t_ghost_split_diff
+	
+	prob_list = []
+	prob_list = initialize_pop(L,prob_list, uncoalesced_pop1, N)
+	prob_list = initialize_pop(L,prob_list, uncoalesced_pop2, N)
+	uncoalesced_pop1 = time_lapse(uncoalesced_pop1, N, t_ghost_mix)
+	uncoalesced_pop2 = time_lapse(uncoalesced_pop2, N, t_ghost_mix)
+	prob_list, uncoalesced_pop1, uncoalesced_ghost, 
+		uncoalesced_pop1_ghost = ghost_pop_split(L, prob_list, 
+		uncoalesced_pop1, N, N, N, t_ghost_mix, f)
+	uncoalesced_pop2_ghost = uncoalesced_pop1_pop2*f   # extra bookkeeping
+	uncoalesced_pop1_pop2 = uncoalesced_pop1_pop2*(1-f)   # extra bookkeeping
+	uncoalesced_pop1 = time_lapse(uncoalesced_pop1, N, t_split_diff)
+	uncoalesced_pop2 = time_lapse(uncoalesced_pop2, N, t_split_diff)
+	uncoalesced_ghost = time_lapse(uncoalesced_ghost, N, t_split_diff)
+	prob_list, uncoalesced_main = pop_merge(L, prob_list, 
+		uncoalesced_pop1, uncoalesced_pop2, uncoalesced_pop1_pop2, 
+			N, N, N, t_split)
+	uncoalesced_main_ghost = uncoalesced_pop1_ghost 
+		+ uncoalesced_pop2_ghost	#extra bookkeeping
+	uncoalesced_main = time_lapse(uncoalesced_main, N, t_ghost_split_diff)
+	uncoalesced_ghost = time_lapse(uncoalesced_ghost, N, t_ghost_split_diff)
+	prob_list, uncoalesced_merged = pop_merge(L, prob_list, 
+		uncoalesced_main, uncoalesced_ghost, uncoalesced_main_ghost, 
+		N, N, N, t_ghost_split)
+	
+	return math.fsum(prob_list)
+\end{Verbatim}
+
+\begin{thebibliography}{99}
+
+\bibitem{ms}  Hudson R (2002) Generating samples under a Wright-Fisher neutral model of genetic variation. Bioinformatics 18: 337--338.
+\end{thebibliography}
+
+\end{document}
+

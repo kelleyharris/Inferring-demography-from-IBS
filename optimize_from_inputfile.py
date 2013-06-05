@@ -5,6 +5,7 @@ african_filename=sys.argv[1]
 non_african_filename=sys.argv[2]
 between_filename=sys.argv[3]
 outfile_name=sys.argv[4]
+min_tract_length=sys.argv[5]
 
 output=''
 
@@ -29,7 +30,7 @@ def extract_params_recent(output):
 
 like_dict1=dict({})
 for j in range(20):
-    proc1=subprocess.Popen(['nice','python','infer_from_inputfile.py',african_filename,non_african_filename,between_filename],stdout=subprocess.PIPE)
+    proc1=subprocess.Popen(['nice','python','infer_from_inputfile.py',african_filename,non_african_filename,between_filename, min_tract_length],stdout=subprocess.PIPE)
     out1=proc1.communicate()[0]
     bneck_params, like =extract_params_recent(out1)
     like_dict1[like]=bneck_params

@@ -8,12 +8,7 @@ import sys
 pop1_filename=sys.argv[1]
 pop2_filename=sys.argv[2]
 pop1_pop2_filename=sys.argv[3]
-
-
-### Change this parameter to a value higher than 1 if your data show evidence of variable mutation rate (see manual). var_mutrate_factor=39 is recommended for human data.
-var_mutrate_factor=1
-min_tract_length=3
-###
+min_tract_length=int(sys.argv[4])
 
 from demographic_inputfile import *
 

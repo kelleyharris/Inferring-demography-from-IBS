@@ -4,8 +4,10 @@
 ######
 global theta
 theta=0.001 
+## theta = 0.001 corresponds to a mutation rate of 2.5 * 10^(-8) mutations per site per generation
 global rho
 rho=0.0004
+## rho = 0.0004 corresponds to a recombination rate of 1.0 * 10^(-8) crossovers per site per generation
 #######
 
 import math
@@ -26,7 +28,6 @@ def prob_L_from_mut(L,ta,ts,phi,N, theta0=theta):
             b=0.5+0.25*L*rho*N+0.5*L*theta*N
             c=(0.25+0.5*exp(ta/N)-0.5*exp(2*ta/N))*L*rho*N
             prob1=phi*0.5*exp(0.5*L*((-1.5+exp(-ta/N))*N*rho-2*ta*theta)+c)*hyper(1,b+1,-c)/b
-        #        prob=phi*0.5*exp(0.5*L*((-1.5+exp(-ta/N))*N*rho-2*ta*theta))*(-c)**(-b)*(gamma(1+b)-b*gammainc(b,0,-c))/b
             b+=0.5*theta0*N
             c=(0.25+exp(ta/N)*(0.5-0.5*exp(ta/N)))*L*rho*N
             prob2=-phi*0.5*exp(-0.75*L*rho*N+0.5*exp(-ta/N)*L*rho*N-ta*theta0-L*ta*theta+c)*hyper(1,b+1,-c)/b
@@ -35,7 +36,6 @@ def prob_L_from_mut(L,ta,ts,phi,N, theta0=theta):
         if phi<0.99:
             b=0.5+0.25*L*rho*N+0.5*L*theta*N
             c=(0.25+0.5*exp(ts/N)-0.5*exp(2*ts/N))*L*rho*N
-        #        prob+=(1-phi)*0.5*exp(0.5*L*((-1.5+exp(-ts/N))*N*rho-2*ts*theta))*(-c)**(-b)*(gamma(1+b)-b*gammainc(b,0,-c))/b
             prob3=(1-phi)*0.5*exp(0.5*L*((-1.5+exp(-ts/N))*N*rho-2*ts*theta)+c)*hyper(1,b+1,-c)/b
             b+=0.5*theta0*N
             c=(0.25+exp(ts/N)*(0.5-0.5*exp(ts/N)))*L*rho*N
@@ -188,7 +188,7 @@ def prob_L_2_recombs(L,ts,N):
     prob-=r**2/(r+t)**2*exp(-ts*(L*(rho+theta)+theta))*(2*prob4-prob5-prob6)
 
 
-    # three recent recombinations:(bug-checked)
+    # three recent recombinations:
 
     prob13=1.0/((r+t)*(3-2*r+L*(r+t)))*(log((2+(-3+L)*r+(-2+L)*t)/(2+t))*log((1+(-2+L)*r+(-1+L)*t)*(1+(-1+L)*(r+t)))+log((1+(-2+L)*r+(-1+L)*t)/(1+r+2*t))*log((1+(-2+L)*r+(-1+L)*t)*(1+(-1+L)*(r+t))))
     prob13-=log((1+t)*(1+r+t))*(-log(2+t)-log(1+r+2*t)+log(2+(-3+L)*r+(-2+L)*t)+log(1+(-2+L)*r+(-1+L)*t))/((r+t)*(3-2*r+L*(r+t)))
@@ -209,10 +209,7 @@ def prob_L_from_mut_precise_varmu(L,ta,ts,phi,N, theta0=theta):
         prob+=recent_deep_recent(L,phi,ta,ts,N)
     if phi<0.99:
         prob+=ancient_shallow_ancient(L,phi,ta,ts,N)
-#    prob+=recent_shallow_ancient(L,phi,ta,ts,N)
-#    prob+=2*ancient_shallow_recent(L,phi,ta,ts,N)
         prob+=ancient_deep_ancient(L,phi,ta,ts,N)
-#        prob+=ancient_medium_ancient(L,phi,ta,ts,N)
     if L>3:
         if phi>0.01:
             prob+=phi*prob_L_2_recombs(L,ta,N)

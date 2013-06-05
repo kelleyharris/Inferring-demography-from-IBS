@@ -14,9 +14,8 @@ import sys
 from demographic_function_builder import *
 
 tractfile=sys.argv[1]
-generation_time=int(sys.argv[2])
-result_file=sys.argv[3]
-output_file=sys.argv[4]
+result_file=sys.argv[2]
+output_file=sys.argv[3]
 
 
 def prob_L_from_mut_precise(L,ts,N):
@@ -66,15 +65,6 @@ for i in range(len(params)/2):
     t_diffs.append(float(params[i]))
 for i in range(len(params)/2, len(params)):
     Ns.append(float(params[i]))
-
-print 'Population size change times (kya): '
-t=0
-for i in range(len(t_diffs)):
-    t+=t_diffs[i]
-    print t*20*25
-print 'Population sizes: '
-for i in range(len(Ns)):
-    print Ns[i]*10000
 
 for i in range(len(L_series)-1):
     L=L_series[i]

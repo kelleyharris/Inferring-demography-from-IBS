@@ -1,10 +1,8 @@
-##### Enter your species' generation time in years here:
-gen_time = 25
+##### 
 standard_popsize = 10000 ## Your mutation and recombination rates should be scaled with respect to this population size 
 #####
 
 ## This parameter specifies that we will look at IBS tracts longer than min_tract_length base pairs
-min_tract_length = 3
 
 from calc_ibs_backcoal_varmu import prob_L_from_mut_precise_varmu
 from parse_tract_file import get_spectrum_counts
@@ -27,7 +25,8 @@ african_tractfile=sys.argv[2]
 between_tractfile=sys.argv[3]
 result_file=sys.argv[4]
 output_file=sys.argv[5]
-
+gen_time=int(sys.argv[6])
+min_tract_length = int(sys.argv[7])
 
 from demographic_inputfile import *
 fig,axs = plt.subplots(nrows=2, ncols=2, sharex=True,sharey=True)

@@ -4,6 +4,7 @@ from calc_ibs_backcoal_varmu import prob_L_from_mut_precise_varmu
 
 #### 
 ### To assume constant mutation rate, set var_mutrate_param equal to theta. Set var_mutrate_param to a higher value than theta if you want to assume that 0.1% of sites have a higher mutation rate. To model cryptic mutation hotspots in humans, we set var_mutrate_param=0.039 (such that 0.1% of sites have a mutation rate that is 39x higher than the rest of the genome)
+
 var_mutrate_param=0.039
 ####
 

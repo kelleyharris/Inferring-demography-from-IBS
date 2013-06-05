@@ -7,6 +7,8 @@ from math import exp
 tract_filename = sys.argv[1]
 min_tract_length = sys.argv[2]
 num_reps=int(sys.argv[3])
+generation_time = int(sys.argv[4])
+
 
 def optimize_random_start(upper_bounds):
     command_line=['nice','python','infer_onepop_cumulative.py',tract_filename, min_tract_length]
@@ -84,17 +86,45 @@ def choose_next_params(upper_bounds, x0):
             new_upper_bounds.append(2*x0[i])
         return new_upper_bounds, x0
 
+def parse_history(history):
+    output='Population sizes (present to past) :'
+    for i in range(len(history)/2, len(history)-1):
+        output+=str(10000*history[i])+', '
+    output+=str(10000*history[-1])+'\n'
+    output+='Population size change times (kya) :'
+    time=0
+    for i in range(len(history)/2-1):
+        time+=history[i]
+        output+=str(generation_time*20*time)+', '
+    if len(history)/2-1>0:
+        time+=history[len(history)/2-1]
+        output+=str(generation_time*20*time)
+    return output
+     
+
 history=optimize_random_start([])
 history.append(history[0])
 history.insert(0,1.0)
-print history
 history=optimize_prescribed_start(history,[1.0])
 upper_bounds=[1.0]
+print ''
+print 'Best history so far: '
+print parse_history(history)
+print ''
+print 'Parameters for plotting: '
 print history
+print ''
+print ''
 
 for rep_num in range(num_reps):
     upper_bounds, history = choose_next_params(upper_bounds, history)
-    print upper_bounds, history
+#    print upper_bounds, history
     history = optimize_prescribed_start(upper_bounds, history)
-    print 'best history so far: ', history
-    
+    print ''
+    print 'Best history so far: '
+    print parse_history(history)
+    print ''
+    print 'Parameters for plotting: '
+    print history
+    print ''
+    print ''
