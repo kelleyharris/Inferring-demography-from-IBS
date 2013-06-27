@@ -16,6 +16,7 @@ maskFolder, percentMissing = sys.argv[3], float(sys.argv[4])
 if maskFolder=='None':
     masked=False
     gap_start, gap_end, next_gap_start, next_gap_end = float('inf'), float('inf'), float('inf'), float('inf')
+    gap_skipped=False
 else:
     masked=True
 

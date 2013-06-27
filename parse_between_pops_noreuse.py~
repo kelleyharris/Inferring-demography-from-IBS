@@ -2,7 +2,7 @@ import sys
 import subprocess
 
 ## Required arguments: race1, race2, maskFolder, percentMissing (if not using a maskFolder, enter maskFolder='None')
-## Optional arguments: hapstart1, hapend1, hapstart2, hapend2 (need to enter all these arguments or none of them)
+## Optional arguments: hapstart1, hapend1 (need to enter both these arguments or neither of them)
 
 
 ## If the input files are not in the same directory as this script, enter the path to their directory here.
@@ -16,7 +16,6 @@ maskFolder, percentMissing = sys.argv[3], float(sys.argv[4])
 if maskFolder=='None':
     masked=False
     gap_start, gap_end, next_gap_start, next_gap_end = float('inf'), float('inf'), float('inf'), float('inf')
-    gap_skipped=False
 else:
     masked=True
 
@@ -32,9 +31,9 @@ num_haps1=len(split1[3])
 num_haps2=len(split2[3])
 
 if len(sys.argv)>5:
-    hapstart1, hapend1, hapstart2, hapend2 = int(sys.argv[5]), int(sys.argv[6]), int(sys.argv[7]), int(sys.argv[8])
+    hapstart1, hapend1= int(sys.argv[5]), int(sys.argv[6])
 else:
-    hapstart1, hapend1, hapstart2, hapend2 = 0, num_haps1, 0, num_haps2
+    hapstart1, hapend1 = 0, num_haps1
 
 lengths=[]
 
@@ -52,54 +51,54 @@ def update_gap(gaps,gap_index):
         return gap_start,gap_end
 
 for i in range(hapstart1, hapend1):
-    for j in range(hapstart2, hapend2):
-        last_chrom=0
-        line_index=0
-        last_pos=0
-        count_missing=0
-        while line_index < len(race1_lines):
-            line1=race1_lines[line_index]
-            line2=race2_lines[line_index]
-            lsplit1=line1.split('\t')
-            lsplit2=line2.split('\t')
-            chrom=int(lsplit1[0])
-            alleles1=lsplit1[3]
-            alleles2=lsplit2[3]
-            if alleles1[i]=='N' or alleles2[j]=='N':
-                count_missing+=1
-            position=int(lsplit1[1])
-            if not chrom==last_chrom:
-                if masked:
-                    gapfile=open(maskFolder+'/chrom'+str(chrom)+'.txt')
-                    gaps=gapfile.readlines()
-                    gap_index=0
-                    gap_start, gap_end=update_gap(gaps,gap_index)
-                    gap_skipped=True
-                last_pos=0
-                count_missing=0
-                last_chrom=chrom
+    j=i
+    last_chrom=0
+    line_index=0
+    last_pos=0
+    count_missing=0
+    while line_index < len(race1_lines):
+        line1=race1_lines[line_index]
+        line2=race2_lines[line_index]
+        lsplit1=line1.split('\t')
+        lsplit2=line2.split('\t')
+        chrom=int(lsplit1[0])
+        alleles1=lsplit1[3]
+        alleles2=lsplit2[3]
+        if alleles1[i]=='N' or alleles2[j]=='N':
+            count_missing+=1
+        position=int(lsplit1[1])
+        if not chrom==last_chrom:
+            if masked:
+                gapfile=open(maskFolder+'/chrom'+str(chrom)+'.txt')
+                gaps=gapfile.readlines()
+                gap_index=0
+                gap_start, gap_end=update_gap(gaps,gap_index)
+                gap_skipped=True
+            last_pos=0
+            count_missing=0
+            last_chrom=chrom
 #            if masked:
 #                next_gap_start, next_gap_end=update_gap(gaps,gap_index+1) 
 #            if chrom==1 and gap_start>=120000000:
 #                print 'position, last_pos, gap_start, gap_end, next_gap_start, next_gap_end: ',position, last_pos, gap_start, gap_end, next_gap_start, next_gap_end
-            if position<gap_start and position> last_pos:
-                if not (alleles1[i]==alleles2[j]) and not alleles1[i]=='N' and not alleles2[j]=='N':
-                    if float(count_missing)/(position-last_pos+1)<percentMissing and not gap_skipped:
-                        lengths.append(position-last_pos)
-                        length_locations.append(str(chrom)+'\t'+str(last_pos)+'\t'+str(position-last_pos)+'\n')
-                    last_pos=position
-                    gap_skipped=False
-                    count_missing=0
-            else:                
-                while position >= gap_start:
-                    last_pos=gap_end
-                    count_missing=0
-                    gap_index+=1
-                    gap_start, gap_end= update_gap(gaps, gap_index)
-                    next_index=gap_index+1
-                    next_gap_start, next_gap_end=update_gap(gaps,next_index)
-                    gap_skipped=True
-            line_index+=1
+        if position<gap_start and position> last_pos:
+            if not (alleles1[i]==alleles2[j]) and not alleles1[i]=='N' and not alleles2[j]=='N':
+                if float(count_missing)/(position-last_pos+1)<percentMissing and not gap_skipped:
+                    lengths.append(position-last_pos)
+                    length_locations.append(str(chrom)+'\t'+str(last_pos)+'\t'+str(position-last_pos)+'\n')
+                last_pos=position
+                gap_skipped=False
+                count_missing=0
+        else:                
+            while position >= gap_start:
+                last_pos=gap_end
+                count_missing=0
+                gap_index+=1
+                gap_start, gap_end= update_gap(gaps, gap_index)
+                next_index=gap_index+1
+                next_gap_start, next_gap_end=update_gap(gaps,next_index)
+                gap_skipped=True
+        line_index+=1
 
 output=''
 for l in lengths:
