@@ -27,7 +27,7 @@ num_haps2=num_haps1
 
 if len(sys.argv)>4:
     hapstart1, hapend1 = int(sys.argv[4]), int(sys.argv[5])
-    hapstart2, hapend2 = hapstart1, hapend1
+    hapstart2, hapend2 = int(sys.argv[6]), int(sys.argv[7])
 else:
     hapstart1, hapend1, hapstart2, hapend2 = 0, num_haps1, 0, num_haps2
 
@@ -47,7 +47,7 @@ def update_gap(gaps,gap_index):
         return gap_start,gap_end
 
 for i in range(hapstart1, hapend1):
-    for j in range(hapstart2, hapend2):
+    for j in range(max(i+1,hapstart2), hapend2):
         last_chrom=0
         line_index=0
         last_pos=0
